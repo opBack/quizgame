@@ -1,6 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
@@ -13,6 +16,9 @@ public class GameManager : MonoBehaviour
     private List<int> FinishedQuestions = new List<int>();
     private int currentQuestion = 0;
 
+    private IEnumerator IE_WaitTillNextRound = null;
+
+
     void Start()
     {
         LoadQuestions();
@@ -20,8 +26,39 @@ public class GameManager : MonoBehaviour
         var seed = UnityEngine.Random.Range(int.MinValue, int.MaxValue);
         UnityEngine.Random.InitState(seed);
 
-      
+
         Display();
+    }
+
+    /// <summary>
+    /// Function that is called to update new selected answer.
+    /// </summary>
+    public void UpdateAnswers(AnswerData newAnswer)
+    {
+        if (Questions[currentQuestion].GetAnswerType == Question.AnswerType.Single)
+        {
+            foreach (var answer in PickedAnswers)
+            {
+                if (answer != newAnswer)
+                {
+                    answer.Reset();
+                }
+            }
+            PickedAnswers.Clear();
+            PickedAnswers.Add(newAnswer);
+        }
+        else
+        {
+            bool alreadyPicked = PickedAnswers.Exists(x => x == newAnswer);
+            if (alreadyPicked)
+            {
+                PickedAnswers.Remove(newAnswer);
+            }
+            else
+            {
+                PickedAnswers.Add(newAnswer);
+            }
+        }
     }
 
     public void EraseAnswers()
@@ -42,6 +79,33 @@ public class GameManager : MonoBehaviour
 
     }
 
+    /// <summary>
+    /// Function that is called to accept picked answers and check/display the result.
+    /// </summary>
+    public void Accept()
+    {
+        bool isCorrect = CheckAnswers();
+        FinishedQuestions.Add(currentQuestion);
+
+        UpdateScore((isCorrect) ? Questions[currentQuestion].AddScore : -Questions[currentQuestion].AddScore);
+
+        if (IE_WaitTillNextRound != null)
+        {
+            StopCoroutine(IE_WaitTillNextRound);
+        }
+        IE_WaitTillNextRound = WaitTillNextRound();
+        StartCoroutine(IE_WaitTillNextRound);
+
+    }
+
+    IEnumerator WaitTillNextRound()
+    {
+        yield return new WaitForSeconds(GameUtility.ResolutionDelayTime);
+        Display();
+    }
+
+
+
     Question GetRandomQuestion()
     {
         var randomIndex = GetRandomQuestionIndex();
@@ -49,6 +113,37 @@ public class GameManager : MonoBehaviour
 
         return Questions[currentQuestion];
     }
+
+    /// <summary>
+    /// Function that is called to check currently picked answers and return the result.
+    /// </summary>
+    bool CheckAnswers()
+    {
+        if (!CompareAnswers())
+        {
+            return false;
+        }
+        return true;
+    }
+    /// <summary>
+    /// Function that is called to compare picked answers with question correct answers.
+    /// </summary>
+    bool CompareAnswers()
+    {
+        if (PickedAnswers.Count > 0)
+        {
+            List<int> c = Questions[currentQuestion].GetCorrectAnswers();
+            List<int> p = PickedAnswers.Select(x => x.AnswerIndex).ToList();
+
+            var f = c.Except(p).ToList();
+            var s = p.Except(c).ToList();
+
+            return !f.Any() && !s.Any();
+        }
+        return false;
+    }
+
+
     int GetRandomQuestionIndex()
     {
         var random = 0;
@@ -69,6 +164,20 @@ public class GameManager : MonoBehaviour
         for (int i = 0; i < objs.Length; i++)
         {
             _questions[i] = (Question)objs[i];
+        }
+    }
+
+
+    /// <summary>
+    /// Function that is called update the score and update the UI.
+    /// </summary>
+    private void UpdateScore(int add)
+    {
+        events.CurrentFinalScore += add;
+
+        if (events.ScoreUpdated != null)
+        {
+            events.ScoreUpdated();
         }
     }
 }

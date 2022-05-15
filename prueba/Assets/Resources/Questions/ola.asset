@@ -10,14 +10,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8420218fc568371458f16a7b264d5979, type: 3}
-  m_Name: New Question
+  m_Name: ola
   m_EditorClassIdentifier: 
-  _info: fifjhiofodho
+  _info: ola
   _answers:
-  - _info: sfsaf
-    _isCorrect: 0
-  - _info: gddss
+  - _info: sadasdsa
     _isCorrect: 1
+  - _info: adsadsda
+    _isCorrect: 0
   _useTimer: 0
   _timer: 0
   _answerType: 0
