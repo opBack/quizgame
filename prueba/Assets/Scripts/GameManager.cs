@@ -18,6 +18,15 @@ public class GameManager : MonoBehaviour
 
     private IEnumerator IE_WaitTillNextRound = null;
 
+    private bool IsFinished
+    {
+        get
+        {
+            return (FinishedQuestions.Count < Questions.Length) ? false : true;
+        }
+    }
+
+
 
     void Start()
     {
@@ -88,6 +97,17 @@ public class GameManager : MonoBehaviour
         FinishedQuestions.Add(currentQuestion);
 
         UpdateScore((isCorrect) ? Questions[currentQuestion].AddScore : -Questions[currentQuestion].AddScore);
+
+        var type
+            = (IsFinished)
+            ? UIManager.ResolutionScreenType.Finish
+            : (isCorrect) ? UIManager.ResolutionScreenType.Correct
+            : UIManager.ResolutionScreenType.Incorrect;
+
+        if (events.DisplayResolutionScreen != null)
+        {
+            events.DisplayResolutionScreen(type, Questions[currentQuestion].AddScore);
+        }
 
         if (IE_WaitTillNextRound != null)
         {

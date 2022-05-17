@@ -12,6 +12,14 @@ public struct UIManagerParameters
     [Header("Answers Options")]
     [SerializeField] float margins;
     public float Margins { get { return margins; } }
+
+    [Header("Resolution Screen Options")]
+    [SerializeField] Color correctBGColor;
+    public Color CorrectBGColor { get { return correctBGColor; } }
+    [SerializeField] Color incorrectBGColor;
+    public Color IncorrectBGColor { get { return incorrectBGColor; } }
+    [SerializeField] Color finalBGColor;
+    public Color FinalBGColor { get { return finalBGColor; } }
 }
 
 [Serializable()]
@@ -28,15 +36,19 @@ public struct UIElements
     public TextMeshProUGUI ScoreText { get { return scoreText; } }
     
     [Space]
-    
+    [SerializeField] Animator resolutionScreenAnimator;
+    public Animator ResolutionScreenAnimator { get { return resolutionScreenAnimator; } }
+
+    [SerializeField] Image resolutionBG;
+    public Image ResolutionBG { get { return resolutionBG; } }
+
     [SerializeField] TextMeshProUGUI resolutionStateInfoText;
     public TextMeshProUGUI ResolutionStateInfoText { get { return resolutionStateInfoText; } }
 
     [SerializeField] TextMeshProUGUI resolutionScoreText;
     public TextMeshProUGUI ResolutionScoreText { get { return resolutionScoreText; } }
 
-    [SerializeField] Image resolutionBG;
-    public Image ResolutionBG { get { return resolutionBG; } }
+   
 
     [Space]
     
@@ -66,11 +78,18 @@ public struct UIElements
         [SerializeField] UIManagerParameters parameters;
 
         List<AnswerData> currentAnswers = new List<AnswerData>();
+        private int resStateParaHash = 0;
+        private IEnumerator IE_DisplayTimedResolution = null;
 
+    /// <summary>
+    /// Function that is called when the object becomes enabled and active
+    /// </summary>
     void OnEnable()
     {
         events.UpdateQuestionUI += UpdateQuestionUI;
-        
+        events.DisplayResolutionScreen += DisplayResolution;
+
+
     }
     /// <summary>
     /// Function that is called when the behaviour becomes disabled
@@ -78,7 +97,17 @@ public struct UIElements
     void OnDisable()
     {
         events.UpdateQuestionUI -= UpdateQuestionUI;
-       
+        events.DisplayResolutionScreen -= DisplayResolution;
+
+
+    }
+
+    /// <summary>
+    /// Function that is called when the script instance is being loaded.
+    /// </summary>
+    void Start()
+    {
+        resStateParaHash = Animator.StringToHash("ScreenState");
     }
 
 
@@ -92,8 +121,85 @@ public struct UIElements
     }
 
     /// <summary>
+    /// Function that is used to display resolution screen.
+    /// </summary>
+    void DisplayResolution(ResolutionScreenType type, int score)
+    {
+        UpdateResUI(type, score);
+        uIElements.ResolutionScreenAnimator.SetInteger(resStateParaHash, 2);
+        uIElements.MainCanvasGroup.blocksRaycasts = false;
+
+        if (type != ResolutionScreenType.Finish)
+        {
+            if (IE_DisplayTimedResolution != null)
+            {
+                StopCoroutine(IE_DisplayTimedResolution);
+            }
+            IE_DisplayTimedResolution = DisplayTimedResolution();
+            StartCoroutine(IE_DisplayTimedResolution);
+        }
+    }
+
+
+    IEnumerator DisplayTimedResolution()
+    {
+        yield return new WaitForSeconds(GameUtility.ResolutionDelayTime);
+        uIElements.ResolutionScreenAnimator.SetInteger(resStateParaHash, 1);
+        uIElements.MainCanvasGroup.blocksRaycasts = true;
+    }
+
+    /// <summary>
+    /// Function that is used to display resolution UI information.
+    /// </summary>
+    void UpdateResUI(ResolutionScreenType type, int score)
+    {
+        var highscore = PlayerPrefs.GetInt(GameUtility.SavePrefKey);
+
+        switch (type)
+        {
+            case ResolutionScreenType.Correct:
+                uIElements.ResolutionBG.color = parameters.CorrectBGColor;
+                uIElements.ResolutionStateInfoText.text = "CORRECTO!";
+                uIElements.ResolutionScoreText.text = "+" + score;
+                break;
+            case ResolutionScreenType.Incorrect:
+                uIElements.ResolutionBG.color = parameters.IncorrectBGColor;
+                uIElements.ResolutionStateInfoText.text = "INCORRECTO!";
+                uIElements.ResolutionScoreText.text = "-" + score;
+                break;
+            case ResolutionScreenType.Finish:
+                uIElements.ResolutionBG.color = parameters.FinalBGColor;
+                uIElements.ResolutionStateInfoText.text = "PUNTOS OBTENIDOS";
+
+                StartCoroutine(CalculateScore());
+                uIElements.FinishUIElements.gameObject.SetActive(true);
+                uIElements.HighScoreText.gameObject.SetActive(true);
+                uIElements.HighScoreText.text = ((highscore > events.StartupHighscore) ? "<color=yellow>new </color>" : string.Empty) + "Highscore: " + highscore;
+
+
+                break;
+        }
+    }
+
+    /// <summary>
+    /// Function that is used to calculate and display the score.
+    /// </summary>
+    IEnumerator CalculateScore()
+    {
+        var scoreValue = 0;
+        while (scoreValue < events.CurrentFinalScore)
+        {
+            scoreValue++;
+            uIElements.ResolutionScoreText.text = scoreValue.ToString();
+
+            yield return null;
+        }
+    }
+
+    /// <summary>
     /// Function that is used to create new question answers.
     /// </summary>
+
     void CreateAnswers(Question question)
     {
         EraseAnswers();

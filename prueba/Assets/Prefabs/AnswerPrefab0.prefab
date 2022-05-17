@@ -152,8 +152,8 @@ MonoBehaviour:
   infoTextObject: {fileID: 3560874531232589116}
   toggle: {fileID: 4030937035374213544}
   infoimageObject: {fileID: 0}
-  uncheckedToggle: {fileID: 0}
-  checkedToggle: {fileID: 0}
+  uncheckedToggle: {fileID: 21300000, guid: f067d066c139c5f43b9d36c544223e4b, type: 3}
+  checkedToggle: {fileID: 21300000, guid: 56393268d9f3cff4bae04d6868d2339a, type: 3}
   events: {fileID: 0}
 --- !u!1 &4030937035374213542
 GameObject:
