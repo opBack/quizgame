@@ -9,9 +9,6 @@ public class AnswerData : MonoBehaviour
     [SerializeField] TextMeshProUGUI infoTextObject;
     [SerializeField] Image toggle;
 
-    [Header("UI Elements alternate")]
-    [SerializeField] Image infoimageObject;
-    
 
     [Header("Textures")]
     [SerializeField] Sprite uncheckedToggle;

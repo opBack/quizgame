@@ -26,6 +26,21 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Function that is called when the object becomes enabled and active
+    /// </summary>
+    void OnEnable()
+    {
+        events.UpdateQuestionAnswer += UpdateAnswers;
+    }
+    /// <summary>
+    /// Function that is called when the behaviour becomes disabled
+    /// </summary>
+    void OnDisable()
+    {
+        events.UpdateQuestionAnswer -= UpdateAnswers;
+    }
+
 
 
     void Start()
